@@ -1,0 +1,1 @@
+为了解耦，在ListImageDirPopupWindow的initEvent()方法中设置LIstView的item的onClick事件，然后设置一个接口，用一个接口进行回调，在MainActivity中实现该接口，并且编写需要的逻辑代码

@@ -1,0 +1,13 @@
+android:stretchMode="columnWidth"
+http://blog.csdn.net/java2009cgh/article/details/34836967
+<!--如何填满空余的位置，模拟器采用WVGA800*480，每排4列，有4＊100＋5＊3＝415，还余65px的空间，如果是columnWidth，则这剩余的65将分摊给4列，每列增加16/17px。如果采用SpacingWidth，则分摊给3个间隔空隙 -->
+
+android:cacheColorHint="@android:color/transparent" //去除拖动时默认的黑色背景
+http://zhidao.baidu.com/link?url=spOGBRiyb150CGoNPMdUVU3cLGqzF-_bjC0GOSEHYLp9AR17ywM0NaQGmWRYUHpTIBOn6baKK46Q-h-xOGRVpKTDkq4_0c38VkZu4zo9aKe
+把cacheColorHint这个属性去掉的话，滑动ListView的话会看到item一闪一闪的变颜色，cacheColorHint从字面上就可以看出和缓存有关，一般是设置为null或者是#00000000(透明)也可以
+
+android:listSelector="@android:color/transparent" //防止在拖拽的时候闪现出黑色
+http://blog.csdn.net/gchk125/article/details/7586401
+
+android:clipChildren的意思：是否限制子View在其范围内
+http://www.cnblogs.com/over140/p/3508335.html

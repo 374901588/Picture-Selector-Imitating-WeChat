@@ -1,0 +1,7 @@
+1.如果将程序挂在后台，然后新建一个文件夹，在里面添加一些图片，然后重进程序，该文件夹不能被扫描到，除非重启程序
+
+2.在已有文件夹下增减图片，如果不在PopupWindow中重新点击该文件夹，增减的图片是不会刷新的
+//必须在查找前进行全盘的扫描，否则新加入的图片是无法得到显示的(加入对sd卡操作的权限) 参考网址：http://www.2cto.com/kf/201305/214899.html
+
+//sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED,
+//Uri.parse("file://"+ Environment.getExternalStorageDirectory())));

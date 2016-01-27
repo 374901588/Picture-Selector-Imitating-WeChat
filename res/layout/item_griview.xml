@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <ImageView
+        android:id="@+id/id_item_image"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/pictures_no" />
+    <!--
+         android:scaleType是控制图片如何resized/moved来匹对ImageView的size 
+    	 centerCrop  按比例扩大图片的size居中显示，使得图片长(宽)等于或大于View的长(宽)
+    -->
+
+    <ImageButton
+        android:id="@+id/id_item_select"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginRight="3dp"
+        android:layout_marginTop="3dp"
+        android:background="@null"
+        android:clickable="false"
+        android:src="@drawable/picture_unselected" />
+    <!-- android:clickable="false" 默认不被选择 -->
+
+</RelativeLayout>

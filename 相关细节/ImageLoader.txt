@@ -1,0 +1,60 @@
+1、尽可能的去避免内存溢出
+   a、根据图片的显示大小去压缩图片
+   b、使用缓存对我们的图片进行管理（LruCache）
+
+2、用户操作UI控件必须充分的流畅
+getView里面尽可能不去做耗时的操作（异步加载+回调显示）
+
+3、用户预期显示的图片尽可能的快（图片的加载策略选择 LIFO后进先出）
+
+Imageloader 该类用于统一的管理图片（加载图片以及实现以上三个目标）
+上述类 的执行流程：
+getView() {
+   url -> Bitmap
+   url -> LruCache查找（LruCache用来缓存图片）
+	     -> 找到返回，利用一个Handler设置回调为ImageView设置图片
+	     -> 找不到 url -> 创建一个Task -> 将Task放入TaskQueue且发送一个通知去提醒后台轮询线程
+	     
+			   Task -> run() {
+				根据url加载图片
+				1、获得图片显示的大小
+				2、使用Options对图片进行压缩
+				3、加载图片且放入LruCache
+			   }
+}
+
+后台轮询线程：
+从TaskQueue -> 取出Task -> 交给线程池去执行
+采用Handler+Looper+Message（Android异步执行处理框架）去实现
+Looper主要作用：
+1、与当前线程绑定，保证一个线程只会有一个Looper实例，同时一个Looper实例也只有一个MessageQueue。
+2、loop()方法，不断从MessageQueue中去取消息，交给消息的target属性的dispatchMessage去处理。
+好了，我们的异步消息处理线程已经有了消息队列（MessageQueue），也有了在无限循环体中取出消息的哥们，现在缺的就是发送消息的对象了，于是乎：Handler登场了。
+
+安卓中如果不将一个Handler的实例绑定到一个新的线程中，则该Handler实例属于主线程
+
+ImageLoader中存在的问题：
+3-1的4:40起
+在mUIHandler中的handleMessage中不能直接用msg.obj来取bitmap（前提是在sendMessage的时候只在msg.obj中绑定bitmap）然后根据loadImage方法参数path和imageView来设置图片，因为mUIHandler中的handleMessage在执行的时候所获得的bitmap不一定是当前的(与之对应的)path和imageView（也就是当前loadImage方法的参数path和imageView，因为mUIHandler是在loadImage中初始化的，所以mUIHandler的handleMessage可以直接调用loadImage方法的参数path和imageView），因为我们会根据path用getBitmapFromLruCache方法在缓存中获取图片，或者异步去加载（开启新的线程去加载），加载完成后会回调mUIHandler中的handleMessage。
+在显示GridView的时候，适配器的getView方法会被多次调用，因此loadImage也会被多次调用，而每次调用loadImage都会通过refreashBitmap方法来mUIHandler.sendMessage，而Task中refreashBitmap会新的线程中去执行，因此也许会有多个线程并发执行，也许当执行某一个loadImage的时候，正好mUIHandler的handleMessage也刚好在处理一个非该loadImage而sendMessage的message（注意：mUIHandler的handleMessage是在主线程中），如果不用ImgBeanHolder，就可能导致用msg.obj来取bitmap且调用刚才说的loadImage的参数的path和imageView而发生错乱
+解决方法：设置一个内部类ImgBeanHolder，将对应的imageView，bitmap和path绑定成ImgBeanHolder实例的成员
+
+3-4的3:55起
+后台轮询的线程的执行理论上和loadImage方法的执行理论上应该是并行的
+但是实际中可能在使用mPoolThraedhandler的时候mPoolThraedhandler还没有初始化
+当用户new一个ImageLoader的以后有可能会直接调用loadImage方法，而loadImage中的调用了addTask（addTask中使用了mPoolThraedhandler）
+解决方法：利用信号量，mSemaphorePoolThreadHandler
+总结：当一个类中使用了两个线程，且一个线程使用的另外一个线程的变量时，一定要保证该变量已经初始化了
+
+3-5起
+Task -> TaskQueue -> 通知后台线程池取线程 -> 线程池把Task取出放入到自己内部的任务队列中（这里只是放到自己的任务队列中，至于要多久才能完成任务就没有管了，即使没有执行完，如果收到了通知，还是会从TaskQueue取任务） 
+（这一系列到放入线程池的内部队列为止的执行都是瞬间的，从而导致mTaskQueue中始终不大于一个任务，使得FIFO或LIFO没有区别）
+修改：使得只有当目前的Task执行完成后才会去取新的Task
+解决方法：利用信号量，mSemaphoreThreadPool
+
+3-6起
+在getImageViewSize方法中用到了一个API 16的方法getMaxWidth以及getMaxHeight
+解决方法：利用反射获取 自定义方法 public static int getImageViewFieldValue();
+
+最后声明：导包的时候注意别导错了
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
